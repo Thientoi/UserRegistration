@@ -1,5 +1,6 @@
 package com.example.userregistration.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import androidx.annotation.StringRes
@@ -7,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.widget.doAfterTextChanged
 import com.example.userregistration.R
 import com.example.userregistration.databinding.ActivityRegisterBinding
+import com.example.userregistration.model.User
 import com.example.userregistration.validator.FormValidator
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.material.textfield.TextInputEditText
@@ -23,6 +25,7 @@ class RegisterActivity : AppCompatActivity() {
 
         setupClearErrorOnType()
         binding.btnRegister.setOnClickListener { onRegisterClicked() }
+        binding.btnCancel.setOnClickListener { clearForm() }
     }
 
     /** Người dùng gõ lại thì lỗi đỏ biến mất ngay. */
@@ -49,7 +52,28 @@ class RegisterActivity : AppCompatActivity() {
             ).show()
             return
         }
-        // SUCCESS → sẽ chuyển sang Home ở commit 6
+        // SUCCESS → sang trang chủ
+        goToHome()
+    }
+
+    /** Tạo User từ form, gửi sang HomeActivity, rồi xóa form. */
+    private fun goToHome() {
+        val gender = when (binding.rgGender.checkedRadioButtonId) {
+            R.id.rbMale -> getString(R.string.gender_male)
+            R.id.rbFemale -> getString(R.string.gender_female)
+            else -> getString(R.string.gender_other)
+        }
+        val user = User(
+            fullName = binding.etFullName.text.toString().trim(),
+            email = binding.etEmail.text.toString().trim(),
+            phone = binding.etPhone.text.toString().trim(),
+            password = binding.etPassword.text.toString(),
+            gender = gender
+        )
+        startActivity(
+            Intent(this, HomeActivity::class.java).putExtra(HomeActivity.EXTRA_USER, user)
+        )
+        clearForm()   // quay lại từ Home thì form đã trống
     }
 
     /** Kiểm tra tất cả trường, trả về số lỗi. Focus vào ô lỗi đầu tiên. */
@@ -82,5 +106,15 @@ class RegisterActivity : AppCompatActivity() {
 
         firstErrorView?.requestFocus()
         return errorCount
+    }
+
+    /** Nút HỦY: xóa trắng các trường để nhập lại. */
+    private fun clearForm() = with(binding) {
+        listOf(etFullName, etEmail, etPhone, etPassword, etConfirmPassword)
+            .forEach { it.text?.clear() }
+        listOf(tilFullName, tilEmail, tilPhone, tilPassword, tilConfirmPassword)
+            .forEach { it.error = null }
+        rbMale.isChecked = true
+        etFullName.requestFocus()
     }
 }
